@@ -1,7 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import * as mammoth from 'mammoth';
-import ReactQuill from 'react-quill';
-import 'react-quill/dist/quill.snow.css';
+import { Editor } from '@tinymce/tinymce-react';
 import './App.css';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -226,51 +225,64 @@ const App: React.FC = () => {
   }
 
   const handleDownloadPdf = async () => {
-    const editorContent = document.querySelector('.editor-container .ql-editor') as HTMLElement;
-    if (!editorContent) {
-      alert("Erro: Não foi possível encontrar o conteúdo do editor para gerar o PDF.");
-      return;
-    }
-    setIsDownloading(true);
-    try {
-      const canvas = await html2canvas(editorContent, {
-        scale: 2,
-        useCORS: true,
-      });
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4',
-      });
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      const canvasWidth = canvas.width;
-      const canvasHeight = canvas.height;
-      const ratio = canvasWidth / canvasHeight;
-      const imgHeightInPdf = pdfWidth / ratio;
-      let heightLeft = imgHeightInPdf;
-      let position = 0;
+  setIsDownloading(true);
+  try {
+    const tempDiv = document.createElement('div');
+    tempDiv.style.position = 'absolute';
+    tempDiv.style.left = '-9999px';
+    tempDiv.style.top = '0';
+    tempDiv.style.width = '210mm'; // Largura A4
+    tempDiv.innerHTML = finalDocumentHtml;
+    document.body.appendChild(tempDiv);
+
+    const canvas = await html2canvas(tempDiv, {
+      scale: 2,
+      useCORS: true,
+    });
+
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4',
+    });
+
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = pdf.internal.pageSize.getHeight();
+    const canvasWidth = canvas.width;
+    const canvasHeight = canvas.height;
+    const ratio = canvasWidth / canvasHeight;
+    const imgHeightInPdf = pdfWidth / ratio;
+
+    let heightLeft = imgHeightInPdf;
+    let position = 0;
+
+    pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeightInPdf);
+    heightLeft -= pdfHeight;
+
+    while (heightLeft > 0) {
+      position = -heightLeft;
+      pdf.addPage();
       pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeightInPdf);
       heightLeft -= pdfHeight;
-      while (heightLeft > 0) {
-        position = -heightLeft;
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeightInPdf);
-        heightLeft -= pdfHeight;
-      }
-      pdf.save(`Certidao-${template?.title.replace(/\s/g, '_') || 'documento'}.pdf`);
-    } catch (error) {
-      console.error("Erro ao gerar o PDF:", error);
-      alert("Ocorreu um erro ao gerar o PDF.");
-    } finally {
-      setIsDownloading(false);
     }
-  };
+
+    pdf.save(`Certidao-${template?.title.replace(/\s/g, '_') || 'documento'}.pdf`);
+
+    // Remover o container temporário
+    document.body.removeChild(tempDiv);
+  } catch (error) {
+    console.error("Erro ao gerar o PDF:", error);
+    alert("Ocorreu um erro ao gerar o PDF.");
+  } finally {
+    setIsDownloading(false);
+  }
+};
+
 
   return (
     <div className="container">
-      <h1>Emissor de Certidões - Protótipo</h1>
+      <h1>Testando usar minutas em formato docx para Protótipo da Orius</h1>
 
       {currentView === 'upload' && (
         <div id="upload-view">
@@ -337,10 +349,24 @@ const App: React.FC = () => {
           <h2>3. Edição Final da Certidão</h2>
           <p>O documento foi gerado. Faça os ajustes manuais necessários antes de finalizar.</p>
           <div className="editor-container">
-            <ReactQuill
-              theme="snow"
+            <Editor
+              apiKey='sny4ncto4hf42akdz2eqss2tqd0loo439vfttpuydjc2kqpi'
               value={finalDocumentHtml}
-              onChange={setFinalDocumentHtml}
+              onEditorChange={(content: string) => setFinalDocumentHtml(content)}
+              init={{
+                height: 600,
+                menubar: false,
+                plugins: [
+                  'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
+                  'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
+                  'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount'
+                ],
+                toolbar:
+                  'undo redo | blocks | ' +
+                  'bold italic forecolor | alignleft aligncenter ' +
+                  'alignright alignjustify | bullist numlist outdent indent | ' +
+                  'removeformat | help',
+              }}
             />
           </div>
           <br />
@@ -349,6 +375,7 @@ const App: React.FC = () => {
           </button>
         </div>
       )}
+
     </div>
   );
 };
