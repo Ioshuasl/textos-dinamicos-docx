@@ -100,6 +100,13 @@ const App: React.FC = () => {
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
   const [searchId, setSearchId] = useState<string>('');
   const [isLoadingData, setIsLoadingData] = useState<boolean>(false);
+  const usuarios = [
+    { id: 1, nome: "Carlos Nogueira" },
+    { id: 2, nome: "Juliana Ferreira" },
+    { id: 3, nome: "Marcos Almeida" }
+  ];
+  const [usuarioAtual, setUsuarioAtual] = useState(usuarios[0]);
+
 
   // usando a função para buscar dados do registro
   const handleFetchData = async () => {
@@ -225,60 +232,59 @@ const App: React.FC = () => {
   }
 
   const handleDownloadPdf = async () => {
-  setIsDownloading(true);
-  try {
-    const tempDiv = document.createElement('div');
-    tempDiv.style.position = 'absolute';
-    tempDiv.style.left = '-9999px';
-    tempDiv.style.top = '0';
-    tempDiv.style.width = '210mm'; // Largura A4
-    tempDiv.innerHTML = finalDocumentHtml;
-    document.body.appendChild(tempDiv);
+    setIsDownloading(true);
+    try {
+      const tempDiv = document.createElement('div');
+      tempDiv.style.position = 'absolute';
+      tempDiv.style.left = '-9999px';
+      tempDiv.style.top = '0';
+      tempDiv.style.width = '210mm'; // Largura A4
+      tempDiv.innerHTML = finalDocumentHtml;
+      document.body.appendChild(tempDiv);
 
-    const canvas = await html2canvas(tempDiv, {
-      scale: 2,
-      useCORS: true,
-    });
+      const canvas = await html2canvas(tempDiv, {
+        scale: 2,
+        useCORS: true,
+      });
 
-    const imgData = canvas.toDataURL('image/png');
-    const pdf = new jsPDF({
-      orientation: 'portrait',
-      unit: 'mm',
-      format: 'a4',
-    });
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+      });
 
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = pdf.internal.pageSize.getHeight();
-    const canvasWidth = canvas.width;
-    const canvasHeight = canvas.height;
-    const ratio = canvasWidth / canvasHeight;
-    const imgHeightInPdf = pdfWidth / ratio;
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const canvasWidth = canvas.width;
+      const canvasHeight = canvas.height;
+      const ratio = canvasWidth / canvasHeight;
+      const imgHeightInPdf = pdfWidth / ratio;
 
-    let heightLeft = imgHeightInPdf;
-    let position = 0;
+      let heightLeft = imgHeightInPdf;
+      let position = 0;
 
-    pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeightInPdf);
-    heightLeft -= pdfHeight;
-
-    while (heightLeft > 0) {
-      position = -heightLeft;
-      pdf.addPage();
       pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeightInPdf);
       heightLeft -= pdfHeight;
+
+      while (heightLeft > 0) {
+        position = -heightLeft;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeightInPdf);
+        heightLeft -= pdfHeight;
+      }
+
+      pdf.save(`Certidao-${template?.title.replace(/\s/g, '_') || 'documento'}.pdf`);
+
+      // Remover o container temporário
+      document.body.removeChild(tempDiv);
+    } catch (error) {
+      console.error("Erro ao gerar o PDF:", error);
+      alert("Ocorreu um erro ao gerar o PDF.");
+    } finally {
+      setIsDownloading(false);
     }
-
-    pdf.save(`Certidao-${template?.title.replace(/\s/g, '_') || 'documento'}.pdf`);
-
-    // Remover o container temporário
-    document.body.removeChild(tempDiv);
-  } catch (error) {
-    console.error("Erro ao gerar o PDF:", error);
-    alert("Ocorreu um erro ao gerar o PDF.");
-  } finally {
-    setIsDownloading(false);
-  }
-};
-
+  };
 
   return (
     <div className="container">
@@ -345,30 +351,60 @@ const App: React.FC = () => {
 
       {currentView === 'editor' && (
         <div id="editor-view">
+          <div style={{ marginBottom: '1rem' }}>
+            <label style={{ marginRight: '0.5rem' }}>Usuário atual:</label>
+            <select
+              value={usuarioAtual.id}
+              onChange={(e) => {
+                const selectedUser = usuarios.find(u => u.id === parseInt(e.target.value));
+                if (selectedUser) setUsuarioAtual(selectedUser);
+              }}
+            >
+              {usuarios.map(user => (
+                <option key={user.id} value={user.id}>{user.nome}</option>
+              ))}
+            </select>
+          </div>
+
           <button onClick={() => setCurrentView('form')} className="secondary">Voltar e Corrigir Dados</button>
           <h2>3. Edição Final da Certidão</h2>
           <p>O documento foi gerado. Faça os ajustes manuais necessários antes de finalizar.</p>
-          <div className="editor-container">
+          <div className="a4-editor-container">
             <Editor
               apiKey='sny4ncto4hf42akdz2eqss2tqd0loo439vfttpuydjc2kqpi'
               value={finalDocumentHtml}
               onEditorChange={(content: string) => setFinalDocumentHtml(content)}
               init={{
-                height: 600,
+                selector: 'textarea',
+                user_id: 'ioshua',
+                with: 794,
+                height: 1123,
                 menubar: false,
+                browser_spellcheck: true,
+                contextmenu: false,
                 plugins: [
                   'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
                   'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
-                  'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount'
+                  'insertdatetime', 'media', 'table', 'code', 'codesample', 'help', 'wordcount', 'autosave', 'searchreplace'
                 ],
-                toolbar:
-                  'undo redo | blocks | ' +
-                  'bold italic forecolor | alignleft aligncenter ' +
-                  'alignright alignjustify | bullist numlist outdent indent | ' +
-                  'removeformat | help',
+                autosave_ask_before_unload: true,
+                toolbar: 'undo redo formatselect fontfamily fontsize link image bold italic forecolor underline align bullist numlist outdent indent removeformat preview fullscreen searchreplace visualblocks blocks help code codesample charmap',
+                fontsize_formats: '4pt 5pt 6pt 7pt 8pt 9pt 10pt 12pt 14pt 16pt 18pt 20pt 22pt 24pt 26pt 28pt 30pt 32pt 34pt 36pt',
+                font_family_formats: ` Times New Roman=Times New Roman, Times, serif; Arial=Arial, Helvetica, sans-serif; Calibri=Calibri, sans-serif; Courier New=Courier New, Courier, monospace; Georgia=Georgia, serif; Verdana=Verdana, Geneva, sans-serif;`,
+                fullscreen_native: true,
+                content_style: `
+                  body {
+                    margin: 2cm;
+                    font-size: 12pt;
+                    }
+                  `
               }}
             />
+            <p style={{ fontStyle: 'italic', color: '#555' }}>
+              Editando como: <strong>{usuarioAtual.nome}</strong>
+            </p>
           </div>
+
           <br />
           <button onClick={handleDownloadPdf} disabled={isDownloading}>
             {isDownloading ? 'Baixando PDF...' : 'Finalizar e Baixar em PDF'}

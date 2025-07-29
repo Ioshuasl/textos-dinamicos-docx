@@ -120,3 +120,12 @@ button:disabled {
 .printable-area strong {
   color: black !important; /* Força a cor preta para o texto no PDF */
 }
+
+.a4-editor-container {
+  width: 794px;
+  margin: 0 auto;
+  background: white;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
+  min-height: 1123px;
+  box-sizing: border-box;
+}
