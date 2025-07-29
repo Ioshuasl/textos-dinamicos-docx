@@ -385,16 +385,18 @@ const App: React.FC = () => {
                 plugins: [
                   'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
                   'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
-                  'insertdatetime', 'media', 'table', 'code', 'codesample', 'help', 'wordcount', 'autosave', 'searchreplace'
+                  'insertdatetime', 'media', 'table', 'code', 'codesample', 'help', 'wordcount', 'autosave', 'searchreplace', 'quickbars', 'quickbars link', 'quickbars image editimage'
                 ],
                 autosave_ask_before_unload: true,
-                toolbar: 'undo redo formatselect fontfamily fontsize link image bold italic forecolor underline align bullist numlist outdent indent removeformat preview fullscreen searchreplace visualblocks blocks help code codesample charmap',
+                toolbar: 'undo redo formatselect fontfamily fontsize link quickimage bold italic forecolor underline align, bullist numlist outdent indent removeformat preview fullscreen searchreplace help code codesample charmap quicktable',
+                quickbars_selection_toolbar: 'bold italic underline | fontfamily | fontsize | quicklink blockquote | quicklink',
+                quickbars_insert_toolbar: 'bold italic underline| fontfamily | fontsize | quicklink blockquote | quicklink |quickimage quicktable | hr pagebreak',
+                quickbars_image_toolbar: 'alignleft aligncenter alignright | rotateleft rotateright | imageoptions',
                 fontsize_formats: '4pt 5pt 6pt 7pt 8pt 9pt 10pt 12pt 14pt 16pt 18pt 20pt 22pt 24pt 26pt 28pt 30pt 32pt 34pt 36pt',
                 font_family_formats: ` Times New Roman=Times New Roman, Times, serif; Arial=Arial, Helvetica, sans-serif; Calibri=Calibri, sans-serif; Courier New=Courier New, Courier, monospace; Georgia=Georgia, serif; Verdana=Verdana, Geneva, sans-serif;`,
                 fullscreen_native: true,
                 content_style: `
                   body {
-                    margin: 2cm;
                     font-size: 12pt;
                     }
                   `
